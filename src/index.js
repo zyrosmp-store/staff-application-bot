@@ -1,6 +1,10 @@
-
 import 'dotenv/config';
-import { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionsBitField } from 'discord.js';
+import { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionsBitField, AttachmentBuilder } from 'discord.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -17,16 +21,18 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply({ content: 'Administrator only!', ephemeral: true });
       }
 
+      const file = new AttachmentBuilder(path.join(__dirname, 'javazyro.jpg'));
+
       const requirementsEmbed = new EmbedBuilder()
-        .setTitle('🎬 Stream Team - Staff Application')
-        .setColor(0x9146FF)
+        .setTitle('🍩 JavaZyro - Staff Application')
+        .setColor(0x008CFF)
         .setDescription(`
-Welcome! We're looking for dedicated **Moderators & Support Staff** for the stream team.
+Welcome! We're looking for dedicated **Moderators & Support Staff** for JavaZyro!
 
 Please read the requirements carefully before applying.
 
 **__REQUIREMENTS__**
-> 🔹 Must be **16+ years old**
+> 🔹 Must be **12+ years old**
 > 🔹 Fluent in **English** (Swedish is a plus)
 > 🔹 Active and available during streams (Evenings CEST)
 > 🔹 Previous experience moderating Twitch / Discord / YouTube
@@ -57,8 +63,9 @@ Please read the requirements carefully before applying.
 
 *Lying or copying applications = Instant denial & blacklist.*
         `)
-        .setFooter({ text: 'Stream Staff Recruitment • Professional & Respectful Team' })
-        .setThumbnail(interaction.guild.iconURL())
+        .setFooter({ text: 'JavaZyro • Staff Recruitment' })
+        .setImage('attachment://javazyro.jpg')
+        .setThumbnail('attachment://javazyro.jpg')
         .setTimestamp();
 
       const row = new ActionRowBuilder().addComponents(
@@ -68,14 +75,14 @@ Please read the requirements carefully before applying.
           .setStyle(ButtonStyle.Primary)
       );
 
-      await interaction.channel.send({ embeds: [requirementsEmbed], components: [row] });
+      await interaction.channel.send({ embeds: [requirementsEmbed], components: [row], files: [file] });
       return interaction.reply({ content: 'Staff application panel posted!', ephemeral: true });
     }
 
     if (interaction.isButton() && interaction.customId === 'open_staff_application') {
       const modal = new ModalBuilder()
         .setCustomId('staff_application_modal')
-        .setTitle('Stream Staff Application');
+        .setTitle('JavaZyro Staff Application');
 
       const ageTz = new TextInputBuilder().setCustomId('age_tz').setLabel('Age, Timezone & Availability?').setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder('Ex: 19, CEST, Available 18:00-23:00').setMaxLength(150);
       const exp = new TextInputBuilder().setCustomId('experience').setLabel('Moderation Experience? (Twitch/Discord)').setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(1000).setPlaceholder('Where have you modded before? What tools did you use? (BTTV, Mod View, Sery_bot?)');
@@ -107,8 +114,8 @@ Please read the requirements carefully before applying.
       }
 
       const applicationEmbed = new EmbedBuilder()
-        .setTitle('📩 New Stream Staff Application')
-        .setColor(0x9146FF)
+        .setTitle('📩 New JavaZyro Staff Application')
+        .setColor(0x008CFF)
         .setThumbnail(interaction.user.displayAvatarURL())
         .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
         .addFields(
