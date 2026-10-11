@@ -21,7 +21,17 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply({ content: 'Administrator only!', ephemeral: true });
       }
 
-      const file = new AttachmentBuilder(path.join(__dirname, 'javazyro.jpg'));
+      // Try to load image, fallback to no image if missing
+      let file = null;
+      let files = [];
+      try {
+        const imagePath = path.join(__dirname, 'javazyro.jpg');
+        console.log('Looking for image at:', imagePath);
+        file = new AttachmentBuilder(imagePath);
+        files = [file];
+      } catch (imgErr) {
+        console.error('Could not load javazyro.jpg:', imgErr.message);
+      }
 
       const requirementsEmbed = new EmbedBuilder()
         .setTitle('🍩 JavaZyro - Staff Application')
@@ -64,9 +74,18 @@ Please read the requirements carefully before applying.
 *Lying or copying applications = Instant denial & blacklist.*
         `)
         .setFooter({ text: 'JavaZyro • Staff Recruitment' })
-        .setImage('attachment://javazyro.jpg')
-        .setThumbnail('attachment://javazyro.jpg')
         .setTimestamp();
+
+      // Only set image if file loaded
+      if (files.length > 0) {
+        requirementsEmbed.setImage('attachment://javazyro.jpg');
+      }
+      // Use server icon as thumbnail, fallback to image if no icon
+      if (interaction.guild.iconURL()) {
+        requirementsEmbed.setThumbnail(interaction.guild.iconURL());
+      } else if (files.length > 0) {
+        requirementsEmbed.setThumbnail('attachment://javazyro.jpg');
+      }
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -75,7 +94,7 @@ Please read the requirements carefully before applying.
           .setStyle(ButtonStyle.Primary)
       );
 
-      await interaction.channel.send({ embeds: [requirementsEmbed], components: [row], files: [file] });
+      await interaction.channel.send({ embeds: [requirementsEmbed], components: [row], files: files });
       return interaction.reply({ content: 'Staff application panel posted!', ephemeral: true });
     }
 
@@ -185,9 +204,11 @@ Please read the requirements carefully before applying.
     }
 
   } catch (e) {
-    console.error(e);
+    console.error('FULL ERROR:', e);
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: 'An error occurred!', ephemeral: true }).catch(() => {});
+      await interaction.reply({ content: `Error: ${e.message}\nCheck Railway logs!`, ephemeral: true }).catch(() => {});
+    } else if (interaction.deferred || interaction.replied) {
+      await interaction.followUp({ content: `Error: ${e.message}`, ephemeral: true }).catch(()=>{});
     }
   }
 });
