@@ -17,8 +17,11 @@ client.once('ready', () => {
 client.on('interactionCreate', async (interaction) => {
   try {
     if (interaction.isChatInputCommand() && interaction.commandName === 'staff-setup') {
+      // Svara direkt så Discord inte timeoutar
+      await interaction.deferReply({ ephemeral: true });
+      
       if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        return interaction.reply({ content: 'Administrator only!', ephemeral: true });
+        return interaction.editReply({ content: 'Administrator only!' });
       }
 
       // --- IMAGE FIX: fungerar även utan fil ---
@@ -100,7 +103,7 @@ Please read the requirements carefully before applying.
       );
 
       await interaction.channel.send({ embeds: [requirementsEmbed], components: [row], files: files });
-      return interaction.reply({ content: 'Staff application panel posted!', ephemeral: true });
+      return interaction.editReply({ content: '✅ Staff application panel posted! Med 12+ och JavaZyro bild!' });
     }
 
     if (interaction.isButton() && interaction.customId === 'open_staff_application') {
@@ -210,7 +213,9 @@ Please read the requirements carefully before applying.
 
   } catch (e) {
     console.error('FULL ERROR:', e);
-    if (!interaction.replied && !interaction.deferred) {
+    if (interaction.deferred) {
+      await interaction.editReply({ content: `Error: ${e.message}` }).catch(() => {});
+    } else if (!interaction.replied) {
       await interaction.reply({ content: `Error: ${e.message}`, ephemeral: true }).catch(() => {});
     }
   }
