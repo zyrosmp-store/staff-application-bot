@@ -21,16 +21,24 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply({ content: 'Administrator only!', ephemeral: true });
       }
 
-      // Try to load image, fallback to no image if missing
-      let file = null;
+      // --- IMAGE FIX: fungerar även utan fil ---
       let files = [];
+      let imageUrl = null;
+      
       try {
         const imagePath = path.join(__dirname, 'javazyro.jpg');
-        console.log('Looking for image at:', imagePath);
-        file = new AttachmentBuilder(imagePath);
-        files = [file];
+        // Kolla om filen finns
+        const fs = await import('fs');
+        if (fs.existsSync(imagePath)) {
+          console.log('Found image at:', imagePath);
+          const file = new AttachmentBuilder(imagePath);
+          files = [file];
+          imageUrl = 'attachment://javazyro.jpg';
+        } else {
+          console.log('javazyro.jpg NOT FOUND in', __dirname, '- using fallback');
+        }
       } catch (imgErr) {
-        console.error('Could not load javazyro.jpg:', imgErr.message);
+        console.error('Image error:', imgErr.message);
       }
 
       const requirementsEmbed = new EmbedBuilder()
@@ -73,18 +81,15 @@ Please read the requirements carefully before applying.
 
 *Lying or copying applications = Instant denial & blacklist.*
         `)
-        .setFooter({ text: 'JavaZyro • Staff Recruitment' })
+        .setFooter({ text: 'JavaZyro • Staff Recruitment • 12+ Allowed' })
         .setTimestamp();
 
-      // Only set image if file loaded
-      if (files.length > 0) {
-        requirementsEmbed.setImage('attachment://javazyro.jpg');
-      }
-      // Use server icon as thumbnail, fallback to image if no icon
-      if (interaction.guild.iconURL()) {
+      // Sätt bild om filen finns, annars använd serverns ikon
+      if (imageUrl) {
+        requirementsEmbed.setImage(imageUrl);
+        requirementsEmbed.setThumbnail(imageUrl);
+      } else if (interaction.guild.iconURL()) {
         requirementsEmbed.setThumbnail(interaction.guild.iconURL());
-      } else if (files.length > 0) {
-        requirementsEmbed.setThumbnail('attachment://javazyro.jpg');
       }
 
       const row = new ActionRowBuilder().addComponents(
@@ -206,9 +211,7 @@ Please read the requirements carefully before applying.
   } catch (e) {
     console.error('FULL ERROR:', e);
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: `Error: ${e.message}\nCheck Railway logs!`, ephemeral: true }).catch(() => {});
-    } else if (interaction.deferred || interaction.replied) {
-      await interaction.followUp({ content: `Error: ${e.message}`, ephemeral: true }).catch(()=>{});
+      await interaction.reply({ content: `Error: ${e.message}`, ephemeral: true }).catch(() => {});
     }
   }
 });
